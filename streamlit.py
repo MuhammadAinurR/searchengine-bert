@@ -39,7 +39,7 @@ def search_papers(query, data, model, tokenizer):
         title_similarity = cosine_similarity(query_embedding, title_embedding)
         abstract_similarity = cosine_similarity(query_embedding, abstract_embedding)
 
-        minimum_similarity = 0.5
+        minimum_similarity = 0.6
         # You can adjust the threshold to control the matching sensitivity
         if title_similarity > minimum_similarity or abstract_similarity > minimum_similarity:
             results.append({
@@ -56,18 +56,18 @@ sample_data = df.sample(n=10, random_state=1)
 data = sample_data  # Make sure to replace "your_paper_data.csv" with your actual data file
 
 # Streamlit code for UI
-st.title('Paper Search Engine')
-user_query = st.text_input("Enter your search query: ")
-if st.button('Search'):
-    st.write('Search for ', user_query)
-    search_results = search_papers(user_query, data, model, tokenizer)
+st.title('Paper Search Engine with Bert')
+user_query = st.sidebar.text_input("Enter your search query: ")
+if st.sidebar.button('Search'):
+    with st.spinner('Searching for papers...'):
+        search_results = search_papers(user_query, data, model, tokenizer)
 
     # Display the search results
     if not search_results:
-        st.write("No matching papers found.")
+        st.error("No matching papers found.")
     else:
-        st.write(f"Found {len(search_results)} papers matching your query:\n")
+        st.success(f"Found {len(search_results)} papers matching your query:")
         for result in search_results:
-            st.write(f"Title: {result['Title']}")
-            st.write(f"Authors: {result['Authors']}")
-            st.write(f"Abstract: {result['Abstract']}\n")
+            st.markdown(f"## {result['Title']}")
+            st.markdown(f"**Authors:** {result['Authors']}")
+            st.markdown(f"**Abstract:** {result['Abstract']}\n")
