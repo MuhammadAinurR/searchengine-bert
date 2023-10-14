@@ -3,6 +3,9 @@ import pandas as pd
 from transformers import AutoModel, AutoTokenizer
 import torch
 import numpy as np
+from nltk.corpus import stopwords
+import nltk
+nltk.download('stopwords')
 
 # Define a function to load BERT model and tokenizer
 @st.cache_resource
@@ -14,6 +17,26 @@ def load_model_and_tokenizer(model_name):
 # Load BERT model and tokenizer (you can choose a specific pre-trained model)
 model_name = "bert-base-uncased"
 model, tokenizer = load_model_and_tokenizer(model_name)
+
+# Load the English stopwords
+stop_words = set(stopwords.words('english'))
+
+# Standard query preprocessing function
+def preprocess_query(query):
+    # Lowercase the query for consistency with the model
+    query = query.lower()
+    
+    # Tokenize the query and remove stopwords
+    tokens = query.split()
+    tokens = [token for token in tokens if token not in stop_words]
+    
+    # Remove duplicate words
+    unique_tokens = list(set(tokens))
+    
+    # Reconstruct the query
+    query = ' '.join(unique_tokens)
+    
+    return query
 
 # Define a function to encode text using BERT
 @st.cache_data
@@ -34,6 +57,7 @@ def cosine_similarity(vec1, vec2):
 # Define a function to search for papers based on user query using BERT embeddings
 def search_papers(query, data, model, tokenizer):
     results = []
+    query = preprocess_query(query)
     query_embedding = encode_text(query, model, tokenizer)
     
     for index, row in data.iterrows():
