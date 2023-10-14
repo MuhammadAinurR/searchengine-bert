@@ -4,19 +4,27 @@ from transformers import AutoModel, AutoTokenizer
 import torch
 import numpy as np
 
+# Define a function to load BERT model and tokenizer
+@st.cache_resource
+def load_model_and_tokenizer(model_name):
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModel.from_pretrained(model_name)
+    return model, tokenizer
+
 # Load BERT model and tokenizer (you can choose a specific pre-trained model)
 model_name = "bert-base-uncased"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModel.from_pretrained(model_name)
+model, tokenizer = load_model_and_tokenizer(model_name)
 
 # Define a function to encode text using BERT
-def encode_text(text, model, tokenizer):
-    input_ids = tokenizer(text, return_tensors="pt", truncation=True, padding=True)['input_ids']
+@st.cache_data
+def encode_text(text, _model, _tokenizer):
+    input_ids = _tokenizer(text, return_tensors="pt", truncation=True, padding=True)['input_ids']
     with torch.no_grad():
-        outputs = model(input_ids)
+        outputs = _model(input_ids)
     return outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
 
 # Define a function to calculate cosine similarity between two vectors
+@st.cache_data
 def cosine_similarity(vec1, vec2):
     dot_product = np.dot(vec1, vec2)
     norm_vec1 = np.linalg.norm(vec1)
@@ -51,9 +59,13 @@ def search_papers(query, data, model, tokenizer):
     return results
 
 # Load your paper data from the CSV
-df = pd.read_csv('2005.csv')
-sample_data = df.sample(n=10, random_state=1)
-data = sample_data  # Make sure to replace "your_paper_data.csv" with your actual data file
+@st.cache_data
+def load_data():
+    df = pd.read_csv('2005.csv')
+    sample_data = df.sample(n=10, random_state=1)
+    return sample_data
+
+data = load_data()
 
 # Streamlit code for UI
 st.title('Paper Search Engine with Bert')
